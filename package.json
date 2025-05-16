@@ -9,8 +9,9 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@coval-ai/components": "^0.0.1-beta.1",
+    "@coval-ai/components": "file:.yalc/@coval-ai/components",
     "next": "15.3.1",
+    "qs": "^6.14.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
