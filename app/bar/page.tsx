@@ -1,11 +1,19 @@
 "use client";
-import { useFilters, useMetrics, BarChart } from "@coval-ai/components";
-import { ChangeEvent, useState } from "react";
+import {
+  useFilters,
+  useMetrics,
+  BarChart,
+  DualAxisPercentageAreaChart,
+} from "@coval-ai/components";
+import { ChangeEvent, useEffect, useState } from "react";
 
 export default function Bar() {
-  const { filters, updateSearchValue, updateDateRange } = useFilters({});
+  const { filters, updateSearchValue, updateDateRange, addMetadataFilter } =
+    useFilters();
   const { data: metrics } = useMetrics();
-  const [selectedMetric, setSelectedMetric] = useState<string | null>(null);
+  const [selectedMetric, setSelectedMetric] = useState<string | null>(
+    "metric_type_yesnoquestions_revia_repetition"
+  );
 
   const handleSearchChange = (e: ChangeEvent<HTMLInputElement>) => {
     updateSearchValue(e.target.value);
@@ -24,10 +32,17 @@ export default function Bar() {
       end: new Date(e.target.value),
     });
   };
-  console.log("render");
+
+  // console.log(filters);
+  // useEffect(() => {
+  //   if (filters.metadataFilters?.length === 0) {
+  //     addMetadataFilter("environment", "DEV");
+  //     addMetadataFilter("customer_id", "174");
+  //   }
+  // }, [filters]);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 mb-28">
       <div className="flex flex-col space-y-2">
         <label htmlFor="search" className="text-sm font-medium">
           Search:
@@ -91,11 +106,24 @@ export default function Bar() {
             ))}
         </select>
       </div>
-
       {selectedMetric && (
         <BarChart
           className="h-80 w-full"
           type="stacked"
+          showPercentages={true}
+          colors={["#AA3939", "#7A9F35", "#60D400", "#6A7897", "#AA8439"]}
+          gridProps={{
+            vertical: true,
+            horizontal: true,
+          }}
+          metricName={selectedMetric}
+          filters={filters}
+        />
+      )}
+      {selectedMetric && (
+        <DualAxisPercentageAreaChart
+          className="h-80 w-full"
+          colors={["#AA3939", "#7A9F35", "#60D400", "#6A7897", "#AA8439"]}
           gridProps={{
             vertical: true,
             horizontal: true,
