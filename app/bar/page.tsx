@@ -4,15 +4,60 @@ import {
   useMetrics,
   BarChart,
   DualAxisPercentageAreaChart,
+  useRunData,
 } from "@coval-ai/components";
-import { ChangeEvent, useEffect, useState } from "react";
+import { ChangeEvent, useState } from "react";
 
 export default function Bar() {
-  const { filters, updateSearchValue, updateDateRange, addMetadataFilter } =
-    useFilters();
-  const { data: metrics } = useMetrics();
+  const { filters, updateSearchValue, updateDateRange } = useFilters({
+    dateRange: {
+      start: new Date("2025-06-19").toISOString(),
+      end: new Date("2025-06-22").toISOString(),
+    },
+    metadataFilters: [
+      {
+        key: "environment",
+        value: "DEV",
+      },
+      {
+        key: "customer_id",
+        value: "100",
+      },
+    ],
+  });
+
+  const [runCategory, setRunCategory] = useState<string | null>(null);
+  const [bucketRange, setBucketRange] = useState<{
+    start: string;
+    end: string;
+    bucketSize: string;
+  } | null>(null);
+
+  const { data: metrics } = useMetrics({
+    metric_type: "built-in",
+  });
+
+  const { data: runData, loading } = useRunData(
+    "metric_type_coval_call_resolution_success",
+    {
+      ...filters,
+      // limit: 10,
+      bucketSize: "1d",
+      category: "N",
+      dateRange: {
+        start: bucketRange?.start || null,
+        end: bucketRange?.end || null,
+      },
+    },
+    {
+      enabled: !!bucketRange,
+    }
+  );
+
+  console.log({ bucketRange, loading });
+
   const [selectedMetric, setSelectedMetric] = useState<string | null>(
-    "metric_type_yesnoquestions_revia_repetition"
+    "metric_type_coval_call_resolution_success"
   );
 
   const handleSearchChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -21,7 +66,7 @@ export default function Bar() {
 
   const handleStartDateChange = (e: ChangeEvent<HTMLInputElement>) => {
     updateDateRange({
-      start: new Date(e.target.value),
+      start: new Date(e.target.value).toISOString(),
       end: filters.dateRange?.end || null,
     });
   };
@@ -29,10 +74,22 @@ export default function Bar() {
   const handleEndDateChange = (e: ChangeEvent<HTMLInputElement>) => {
     updateDateRange({
       start: filters.dateRange?.start || null,
-      end: new Date(e.target.value),
+      end: new Date(e.target.value).toISOString(),
     });
   };
 
+  const handleBarClick = (
+    bucketTimeRange: {
+      start: string;
+      end: string;
+      bucketSize: string;
+    },
+    category: string
+  ) => {
+    console.log(bucketTimeRange, category);
+    setBucketRange(bucketTimeRange);
+    setRunCategory(category);
+  };
   // console.log(filters);
   // useEffect(() => {
   //   if (filters.metadataFilters?.length === 0) {
@@ -53,7 +110,7 @@ export default function Bar() {
           className="border rounded p-2"
           placeholder="Search value..."
           onChange={handleSearchChange}
-          defaultValue={filters.searchValue}
+          defaultValue={filters.searchValue || undefined}
         />
       </div>
 
@@ -67,7 +124,7 @@ export default function Bar() {
             type="date"
             className="border rounded p-2"
             onChange={handleStartDateChange}
-            defaultValue={filters.dateRange?.start?.toISOString().split("T")[0]}
+            defaultValue={filters.dateRange?.start?.split("T")[0]}
           />
         </div>
 
@@ -80,12 +137,12 @@ export default function Bar() {
             type="date"
             className="border rounded p-2"
             onChange={handleEndDateChange}
-            defaultValue={filters.dateRange?.end?.toISOString().split("T")[0]}
+            defaultValue={filters.dateRange?.end?.split("T")[0]}
           />
         </div>
       </div>
 
-      <div className="flex flex-col space-y-2">
+      {/* <div className="flex flex-col space-y-2">
         <label htmlFor="metric" className="text-sm font-medium">
           Metric:
         </label>
@@ -105,7 +162,7 @@ export default function Bar() {
               </option>
             ))}
         </select>
-      </div>
+      </div> */}
       {selectedMetric && (
         <BarChart
           className="h-80 w-full"
@@ -118,12 +175,31 @@ export default function Bar() {
           }}
           metricName={selectedMetric}
           filters={filters}
+          onBarClick={({ bucketTimeRange, category }) =>
+            handleBarClick(bucketTimeRange, category)
+          }
         />
       )}
+      <div className="flex flex-col space-y-2">
+        <pre>
+          {JSON.stringify(
+            {
+              length: runData?.length,
+              filters,
+              runData,
+            },
+            null,
+            2
+          )}
+        </pre>
+      </div>
       {selectedMetric && (
         <DualAxisPercentageAreaChart
           className="h-80 w-full"
           colors={["#AA3939", "#7A9F35", "#60D400", "#6A7897", "#AA8439"]}
+          onAreaClick={({ bucketTimeRange, category }) =>
+            handleBarClick(bucketTimeRange, category)
+          }
           gridProps={{
             vertical: true,
             horizontal: true,
