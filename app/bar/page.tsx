@@ -9,21 +9,25 @@ import {
 import { ChangeEvent, useState } from "react";
 
 export default function Bar() {
+  const [selectedMetric, setSelectedMetric] = useState<string | null>(
+    // "metric_type_coval_call_resolution_success"
+    null
+  );
   const { filters, updateSearchValue, updateDateRange } = useFilters({
-    dateRange: {
-      start: new Date("2025-06-19").toISOString(),
-      end: new Date("2025-06-22").toISOString(),
-    },
-    metadataFilters: [
-      {
-        key: "environment",
-        value: "DEV",
-      },
-      {
-        key: "customer_id",
-        value: "100",
-      },
-    ],
+    // dateRange: {
+    //   start: new Date("2025-06-19").toISOString(),
+    //   end: new Date("2025-06-22").toISOString(),
+    // },
+    // metadataFilters: [
+    //   {
+    //     key: "environment",
+    //     value: "DEV",
+    //   },
+    //   {
+    //     key: "customer_id",
+    //     value: "100",
+    //   },
+    // ],
   });
 
   const [runCategory, setRunCategory] = useState<string | null>(null);
@@ -38,7 +42,8 @@ export default function Bar() {
   });
 
   const { data: runData, loading } = useRunData(
-    "metric_type_coval_call_resolution_success",
+    selectedMetric || "",
+    // "metric_type_coval_call_resolution_success",
     {
       ...filters,
       // limit: 10,
@@ -52,12 +57,6 @@ export default function Bar() {
     {
       enabled: !!bucketRange,
     }
-  );
-
-  console.log({ bucketRange, loading });
-
-  const [selectedMetric, setSelectedMetric] = useState<string | null>(
-    "metric_type_coval_call_resolution_success"
   );
 
   const handleSearchChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -142,7 +141,7 @@ export default function Bar() {
         </div>
       </div>
 
-      {/* <div className="flex flex-col space-y-2">
+      <div className="flex flex-col space-y-2">
         <label htmlFor="metric" className="text-sm font-medium">
           Metric:
         </label>
@@ -162,7 +161,7 @@ export default function Bar() {
               </option>
             ))}
         </select>
-      </div> */}
+      </div>
       {selectedMetric && (
         <BarChart
           className="h-80 w-full"

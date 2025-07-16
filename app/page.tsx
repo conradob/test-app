@@ -16,7 +16,7 @@ export default function Home() {
 
   const handleStartDateChange = (e: ChangeEvent<HTMLInputElement>) => {
     updateDateRange({
-      start: new Date(e.target.value),
+      start: new Date(e.target.value).toISOString(),
       end: filters.dateRange?.end || null,
     });
   };
@@ -24,7 +24,7 @@ export default function Home() {
   const handleEndDateChange = (e: ChangeEvent<HTMLInputElement>) => {
     updateDateRange({
       start: filters.dateRange?.start || null,
-      end: new Date(e.target.value),
+      end: new Date(e.target.value).toISOString(),
     });
   };
 
@@ -62,7 +62,7 @@ export default function Home() {
           className="border rounded p-2"
           placeholder="Search value..."
           onChange={handleSearchChange}
-          defaultValue={filters.searchValue}
+          defaultValue={filters.searchValue || ""}
         />
       </div>
 
@@ -76,7 +76,7 @@ export default function Home() {
             type="date"
             className="border rounded p-2"
             onChange={handleStartDateChange}
-            defaultValue={filters.dateRange?.start?.toISOString().split("T")[0]}
+            defaultValue={filters.dateRange?.start?.split("T")[0]}
           />
         </div>
 
@@ -89,7 +89,7 @@ export default function Home() {
             type="date"
             className="border rounded p-2"
             onChange={handleEndDateChange}
-            defaultValue={filters.dateRange?.end?.toISOString().split("T")[0]}
+            defaultValue={filters.dateRange?.end?.split("T")[0]}
           />
         </div>
         <div className="flex flex-col space-y-2">
@@ -100,7 +100,7 @@ export default function Home() {
             id="bucketSize"
             className="border rounded p-2"
             onChange={handleSelectBucketSizeChange}
-            defaultValue={filters.bucketSize}
+            defaultValue={filters.bucketSize || ""}
           >
             <option value="">Select Bucket Size</option>
             <option value="1h">1h</option>
