@@ -1,19 +1,14 @@
 "use client";
-import {
-  CovalProvider,
-  LatencyChart,
-  useFilters,
-  useMetrics,
-} from "@coval-ai/components";
-import { ChangeEvent } from "react";
+import { LatencyChart, useFilters } from "@coval-ai/components";
+import { ChangeEvent, useEffect, useState } from "react";
 
-const token = process.env.NEXT_PUBLIC_COVAL_TOKEN || "";
-const apiUrl = process.env.NEXT_PUBLIC_COVAL_API_URL || undefined;
+export default function Home() {
+  const { filters, updateSearchValue, updateDateRange, updateBucketSize } =
+    useFilters();
 
-const Component = () => {
-  const { filters, updateSearchValue, updateDateRange, updateSelectedMetric } =
-    useFilters({});
-  const { data: metrics } = useMetrics();
+  const [customBucketSize, setCustomBucketSize] = useState<string | undefined>(
+    undefined
+  );
 
   const handleSearchChange = (e: ChangeEvent<HTMLInputElement>) => {
     updateSearchValue(e.target.value);
@@ -21,7 +16,7 @@ const Component = () => {
 
   const handleStartDateChange = (e: ChangeEvent<HTMLInputElement>) => {
     updateDateRange({
-      start: new Date(e.target.value),
+      start: new Date(e.target.value).toISOString(),
       end: filters.dateRange?.end || null,
     });
   };
@@ -29,9 +24,31 @@ const Component = () => {
   const handleEndDateChange = (e: ChangeEvent<HTMLInputElement>) => {
     updateDateRange({
       start: filters.dateRange?.start || null,
-      end: new Date(e.target.value),
+      end: new Date(e.target.value).toISOString(),
     });
   };
+
+  const handleSelectBucketSizeChange = (e: ChangeEvent<HTMLSelectElement>) => {
+    if (e.target.value === "custom") {
+      setCustomBucketSize("");
+    } else {
+      setCustomBucketSize(undefined);
+      updateBucketSize(e.target.value);
+    }
+  };
+
+  const handleCustomBucketSizeChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setCustomBucketSize(e.target.value);
+  };
+
+  useEffect(() => {
+    if (customBucketSize) {
+      const timeout = setTimeout(() => {
+        updateBucketSize(customBucketSize);
+      }, 500);
+      return () => clearTimeout(timeout);
+    }
+  }, [customBucketSize]);
 
   return (
     <div className="space-y-4">
@@ -45,7 +62,7 @@ const Component = () => {
           className="border rounded p-2"
           placeholder="Search value..."
           onChange={handleSearchChange}
-          defaultValue={filters.searchValue}
+          defaultValue={filters.searchValue || ""}
         />
       </div>
 
@@ -59,7 +76,7 @@ const Component = () => {
             type="date"
             className="border rounded p-2"
             onChange={handleStartDateChange}
-            defaultValue={filters.dateRange?.start?.toISOString().split("T")[0]}
+            defaultValue={filters.dateRange?.start?.split("T")[0]}
           />
         </div>
 
@@ -72,42 +89,39 @@ const Component = () => {
             type="date"
             className="border rounded p-2"
             onChange={handleEndDateChange}
-            defaultValue={filters.dateRange?.end?.toISOString().split("T")[0]}
+            defaultValue={filters.dateRange?.end?.split("T")[0]}
           />
         </div>
-      </div>
-
-      <div className="flex flex-col space-y-2">
-        <label htmlFor="metric" className="text-sm font-medium">
-          Metric:
-        </label>
-        <select
-          id="metric"
-          className="border rounded p-2"
-          value={filters.selectedMetric || ""}
-          onChange={(e) => updateSelectedMetric(e.target.value)}
-        >
-          <option value="" disabled>
-            Select a metric
-          </option>
-          {metrics &&
-            metrics.map((metric) => (
-              <option key={metric.metric_name} value={metric.metric_name}>
-                {metric.metric_display_name}
-              </option>
-            ))}
-        </select>
+        <div className="flex flex-col space-y-2">
+          <label htmlFor="bucketSize" className="text-sm font-medium">
+            Bucket Size:
+          </label>
+          <select
+            id="bucketSize"
+            className="border rounded p-2"
+            onChange={handleSelectBucketSizeChange}
+            defaultValue={filters.bucketSize || ""}
+          >
+            <option value="">Select Bucket Size</option>
+            <option value="1h">1h</option>
+            <option value="15m">6h</option>
+            <option value="1d">1d</option>
+            <option value="1w">1w</option>
+            <option value="1m">1m</option>
+            <option value="custom">Custom</option>
+          </select>
+          {typeof customBucketSize === "string" && (
+            <input
+              type="text"
+              className="border rounded p-2"
+              value={customBucketSize}
+              onChange={handleCustomBucketSizeChange}
+            />
+          )}
+        </div>
       </div>
 
       <LatencyChart className="h-80 w-full" filters={filters} />
     </div>
-  );
-};
-
-export default function Home() {
-  return (
-    <CovalProvider token={token} apiUrl={apiUrl}>
-      <Component />
-    </CovalProvider>
   );
 }
